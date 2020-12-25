@@ -26,6 +26,42 @@ class Tron{
     }
 }
 
+class Player {
+
+    public static void main(String args[]) {
+        Scanner in = new Scanner(System.in);
+        Board board = new Board(20, 30);
+
+        // game loop
+        while (true) {
+            int N = in.nextInt(); // total number of players (2 to 4).
+            int P = in.nextInt(); // your player number (0 to 3).
+            for (int i = 0; i < N; i++) {
+                int X0 = in.nextInt(); // starting X coordinate of lightcycle (or -1)
+                int Y0 = in.nextInt(); // starting Y coordinate of lightcycle (or -1)
+                int X1 = in.nextInt(); // starting X coordinate of lightcycle (can be the same as X0 if you play before this player)
+                int Y1 = in.nextInt(); // starting Y coordinate of lightcycle (can be the same as Y0 if you play before this player)
+
+                if(P == i){
+                    board.setCase(1, Y1, X1);
+                }
+                else{
+                    board.setCase(2, Y1, X1);
+                }
+            }
+
+            Minimax test = new Minimax();
+
+            test.constructTree(board, 1);
+
+            Tree tree = test.getTree();
+
+            String choice = tree.checkWin();
+            System.out.println(choice);
+        }
+    }
+}
+
 class Board {
     private int height;
     private int width;
