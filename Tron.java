@@ -14,18 +14,15 @@ class Tron{
 
       board.setCase(1, 14, 29);
       board.setCase(2, 8, 16);
-      board.printBoard();
-
-      moves = board.getAvailableMoves(1);
-
-      /*
-      for(String move: moves){
-        System.out.println(move);
-      }
-      */
 
       Minimax test = new Minimax();
-      test.constructTree(board, 10);
+      test.constructTree(board, 1);
+
+      Tree tree = test.getTree();
+
+      //tree.printTree();
+      String choice = tree.checkWin();
+      System.out.println(choice);
     }
 }
 
@@ -145,11 +142,34 @@ class Node {
     boolean isMaxPlayer;
     int score;
     List<Node> children;
+    String move;
+    String choice;
 
     public Node(Board board, boolean isMaxPlayer){
       this.board = board;
       this.isMaxPlayer = isMaxPlayer;
+      computeScore();
       children = new ArrayList<Node>();
+    }
+
+    public Node(Board board, boolean isMaxPlayer, String move){
+      this(board, isMaxPlayer);
+      this.move = move;
+    }
+
+    public void computeScore(){
+      List<String> availableMovesMaxPlayer = board.getAvailableMoves(1);
+      List<String> availableMovesMinPlayer = board.getAvailableMoves(2);
+
+      score = availableMovesMaxPlayer.size() - availableMovesMinPlayer.size();
+    }
+
+    public void setChoice(String choice){
+      this.choice = choice;
+    }
+
+    public String getChoice(){
+      return choice;
     }
 
     public void addChild(Node newNode){
@@ -162,6 +182,14 @@ class Node {
 
     public Board getBoard(){
       return board;
+    }
+
+    public String getMove(){
+      return move;
+    }
+
+    public void setMove(String move){
+      this.move = move;
     }
 
     public boolean getIsMaxPlayer(){
@@ -187,6 +215,72 @@ class Tree {
     public Node getRoot(){
       return root;
     }
+
+    public void printTree(){
+      printTree(root);
+    }
+
+    private void printTree(Node root){
+      List<Node> children = new ArrayList<Node>();
+
+      root.getBoard().printBoard();
+      System.out.println(root.getMove());
+      System.out.println(root.getScore());
+      children = root.getChildren();
+
+      for(Node child: children){
+        printTree(child);
+      }
+    }
+
+    public String checkWin() {
+      checkWin(root);
+      return root.getChoice();
+    }
+
+    private void checkWin(Node node) {
+        List<Node> children = node.getChildren();
+        boolean isMaxPlayer = node.getIsMaxPlayer();
+
+        for(Node child: children){
+          checkWin(child);
+        }
+
+        Node bestChild = findBestChild(children, isMaxPlayer);
+
+        if(bestChild != null){
+          node.setChoice(bestChild.getMove());
+        }
+    }
+
+    public Node findBestChild(List<Node> children, boolean isMaxPlayer){
+      Node bestChild = null;
+      int test;
+
+      if(isMaxPlayer){
+        test = -5;
+      }
+      else{
+        test = 5;
+      }
+
+      for(Node child: children){
+        if(isMaxPlayer){
+          if(child.getScore() > test){
+            bestChild = child;
+            test = child.getScore();
+          }
+        }
+        else{
+          if(child.getScore() < test){
+            bestChild = child;
+            test = child.getScore();
+          }
+        }
+      }
+
+      return bestChild;
+    }
 }
 
 class Minimax {
@@ -207,21 +301,18 @@ class Minimax {
 
         boolean isChildMaxPlayer = (!isMaxPlayer);
 
-        System.out.println(isChildMaxPlayer);
-        board.printBoard();
-
         for(String move: availableMoves){
           Board newBoard = board.getBoardCopy();
-
-          System.out.println(isChildMaxPlayer ? 1 : 2);
-          System.out.println(move);
-
-          newBoard.playMove(isChildMaxPlayer ? 1 : 2, move);
-          Node newNode = new Node(newBoard, isChildMaxPlayer);
+          newBoard.playMove(isMaxPlayer ? 1 : 2, move);
+          Node newNode = new Node(newBoard, isChildMaxPlayer, move);
           parentNode.addChild(newNode);
 
           constructTree(newNode, depth - 1);
         }
       }
+    }
+
+    public Tree getTree(){
+      return tree;
     }
 }
