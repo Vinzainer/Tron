@@ -12,17 +12,21 @@ class Tron{
       Board board = new Board(20, 30);
       List<String> moves;
 
-      board.setCase(1, 14, 29);
-      board.setCase(2, 8, 16);
+      board.setCase(1, 18, 29);
+      board.setCase(1, 18, 28);
+      board.setCase(1, 18, 27);
+
+      board.setCase(2, 19, 29);
+      board.setCase(2, 19, 28);
 
       Minimax test = new Minimax();
-      test.constructTree(board, 1);
 
+      test.constructTree(board, 6);
+
+
+      System.out.println("Final choice : " + test.compute());
       Tree tree = test.getTree();
-
-      //tree.printTree();
-      String choice = tree.checkWin();
-      System.out.println(choice);
+      tree.printTree();
     }
 }
 
@@ -52,7 +56,7 @@ class Player {
 
             Minimax test = new Minimax();
 
-            test.constructTree(board, 4);
+            test.constructTree(board, 6);
 
             System.out.println(test.compute());
         }
@@ -168,6 +172,10 @@ class Board {
 
       return newBoard;
     }
+
+    public Map<Integer, Integer[]> getHeadPosition(){
+      return headPosition;
+    }
 }
 
 class Node {
@@ -175,6 +183,7 @@ class Node {
     boolean isMaxPlayer;
     int score;
     String move;
+    String choice;
     List<Node> children;
 
     public Node(Board board, boolean isMaxPlayer){
@@ -202,6 +211,14 @@ class Node {
 
     public String getMove(){
       return move;
+    }
+
+    public void setChoice(String choice){
+      this.choice = choice;
+    }
+
+    public String getChoice(){
+      return choice;
     }
 
     public void setMove(String move){
@@ -240,8 +257,11 @@ class Tree {
       List<Node> children = new ArrayList<Node>();
 
       root.getBoard().printBoard();
-      System.out.println(root.getMove());
-      System.out.println(root.getScore());
+
+      System.out.println("Move :" + root.getMove());
+      System.out.println("Score :" +root.getScore());
+      System.out.println("Choice :" + root.getChoice());
+
       children = root.getChildren();
 
       for(Node child: children){
@@ -287,14 +307,17 @@ class Minimax {
         List<String> availableMovesMaxPlayer = board.getAvailableMoves(1);
         List<String> availableMovesMinPlayer = board.getAvailableMoves(2);
 
+        Map<Integer, Integer[]> position = board.getHeadPosition();
+        Integer[] player = position.get(1);
+        Integer[] op = position.get(2);
+
         if(availableMovesMaxPlayer.size() == 0){
-            score = -100;
+          score -= 100;
         }
         else if(availableMovesMinPlayer.size() == 0){
-            score = 100;
+          score += 100;
         }
 
-        score += availableMovesMaxPlayer.size() - availableMovesMinPlayer.size();
         return score;
     }
 
@@ -305,42 +328,49 @@ class Minimax {
       }
 
       if(isMaxPlayer){
-        int value = -1000;
+        int value = -1000000;
         List<Node> children = node.getChildren();
-
+        String choice = "";
+        //Collections.shuffle(children);
         for(Node child: children){
-          value = Math.max(value, compute(child, depth-1, false));
+          int test = compute(child, depth-1, false);
+          child.setScore(test);
+
+          if(value < test){
+            value = compute(child, depth-1, false);
+            choice = child.getMove();
+          }
         }
 
-        node.setScore(value);
+        node.setChoice(choice);
+
         return value;
       }
       else{
-        int value = 1000;
+        int value = 1000000;
         List<Node> children = node.getChildren();
-
+        String choice = "";
+        //Collections.shuffle(children);
         for(Node child: children){
-          value = Math.min(value, compute(child, depth-1, true));
+          int test = compute(child, depth-1, false);
+          child.setScore(test);
+
+          if(value > test){
+            value = compute(child, depth-1, false);
+            choice = child.getMove();
+          }
         }
-        node.setScore(value);
+
+        node.setChoice(choice);
         return value;
       }
     }
 
     public String compute(){
-      int score = compute(tree.getRoot(), depth, true);
-      int max = -1000;
-      String move = "";
-      List<Node> children = tree.getRoot().getChildren();
-
-      for(Node child: children){
-        if(child.getScore() > max){
-          max = child.getScore();
-          move = child.getMove();
-        }
-      }
-
-      return move;
+        compute(tree.getRoot(), depth-1, true);
+        Node root =  tree.getRoot();
+        String choice = root.getChoice();
+        return choice;
     }
 
     public Tree getTree(){
