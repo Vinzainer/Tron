@@ -2,10 +2,7 @@ import java.util.*;
 import java.io.*;
 import java.math.*;
 
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
+//Tron class to test locally
 class Tron{
 
     public static void main(String args[]) {
@@ -30,6 +27,7 @@ class Tron{
     }
 }
 
+//Player class for Codingame
 class Player {
 
     public static void main(String args[]) {
@@ -56,13 +54,14 @@ class Player {
 
             Minimax test = new Minimax();
 
-            test.constructTree(board, 6);
+            test.constructTree(board, 3);
 
             System.out.println(test.compute());
         }
     }
 }
 
+//Store the board
 class Board {
     private int height;
     private int width;
@@ -96,7 +95,6 @@ class Board {
     }
 
     public void setCase(int player, int i, int j){
-        //System.out.println(i + " " + j);
         grid[i][j] = player;
         Integer[] position = new Integer[2];
         position[0] = i;
@@ -105,11 +103,15 @@ class Board {
     }
 
     public int getCase(int i, int j){
-        return this.grid[i][j];
+        if(i >= 0 && i < height && j >= 0 && j < width){
+            return this.grid[i][j];
+        }
+        else{
+            return -1;
+        }
     }
 
     public void playMove(int player, String direction){
-      //System.out.println(player);
       Integer[] head = headPosition.get(player);
       int i = head[0];
       int j = head[1];
@@ -176,8 +178,17 @@ class Board {
     public Map<Integer, Integer[]> getHeadPosition(){
       return headPosition;
     }
+
+    public int getHeight(){
+        return height;
+    }
+
+    public int getWidth(){
+        return width;
+    }
 }
 
+//Store one possibility of a board and its children
 class Node {
     Board board;
     boolean isMaxPlayer;
@@ -238,6 +249,7 @@ class Node {
     }
 }
 
+//Store the tree of possible board
 class Tree {
     Node root;
 
@@ -270,6 +282,7 @@ class Tree {
     }
 }
 
+//Compute the minimax algorithm and the heuristic
 class Minimax {
     Tree tree;
     int depth;
@@ -301,6 +314,43 @@ class Minimax {
       }
     }
 
+    public int floodfill(Board board, int i, int j, int score){
+        if(board.getCase(i, j) == 0 || board.getCase(i, j) == 1){
+            score += 1;
+
+            board.setCase(1, i, j);
+
+            floodfill(board, i+1, j, score);
+            floodfill(board, i, j+1, score);
+            floodfill(board, i-1, j, score);
+            floodfill(board, i, j-1, score);
+        }
+
+        return score;
+    }
+
+    public int dist(int x0, int y0, int x1, int y1){
+        return Math.round(Math.abs(x1 - x0) + Math.abs(y1 - y0));
+    }
+
+    public int reachable(Board board, int x0, int y0, int x1, int y1){
+        int score = 0;
+
+        for(int i = 0; i < board.getHeight(); i++){
+            for(int j = 0; j < board.getWidth(); j++){
+                if(dist(x0, y0, i, j) < dist(x1, y1, i, j)){
+                    score += 1;
+                }
+                else if(dist(x0, y0, i, j) > dist(x1, y1, i, j)){
+                    score -= 1;
+                }
+            }
+        }
+
+        return score;
+    }
+
+    //Try to get closer to enemy
     public int heuristic(Node node){
         int score = 0;
         Board board = node.getBoard();
@@ -311,12 +361,18 @@ class Minimax {
         Integer[] player = position.get(1);
         Integer[] op = position.get(2);
 
-        if(availableMovesMaxPlayer.size() == 0){
-          score -= 100;
+        if(node.getChildren().size() == 0){
+          if(availableMovesMaxPlayer.size() > 0){
+              return 100;
+          }
+          else if(availableMovesMinPlayer.size() > 0){
+              return -100;
+          }
         }
-        else if(availableMovesMinPlayer.size() == 0){
-          score += 100;
-        }
+
+        score -= Math.round(Math.abs(op[0] - player[0]) + Math.abs(op[1] - player[1]));
+        //score += floodfill(board, player[0], player[1], 0);
+        //score += reachable(board, player[0], player[1], op[0], op[1]);
 
         return score;
     }
@@ -331,13 +387,13 @@ class Minimax {
         int value = -1000000;
         List<Node> children = node.getChildren();
         String choice = "";
-        //Collections.shuffle(children);
+        Collections.shuffle(children);
         for(Node child: children){
           int test = compute(child, depth-1, false);
           child.setScore(test);
 
           if(value < test){
-            value = compute(child, depth-1, false);
+            value = test;
             choice = child.getMove();
           }
         }
@@ -350,13 +406,13 @@ class Minimax {
         int value = 1000000;
         List<Node> children = node.getChildren();
         String choice = "";
-        //Collections.shuffle(children);
+        Collections.shuffle(children);
         for(Node child: children){
           int test = compute(child, depth-1, false);
           child.setScore(test);
 
           if(value > test){
-            value = compute(child, depth-1, false);
+            value = test;
             choice = child.getMove();
           }
         }
